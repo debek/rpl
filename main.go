@@ -1,3 +1,8 @@
+// RPL
+// Author: Daniel Debny - github.com/debek
+// Year: 24.12.2023
+// Description: An application for replacing text in files recursively.
+
 package main
 
 import (
