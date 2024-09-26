@@ -1,8 +1,3 @@
-// RPL
-// Author: Daniel Debny - github.com/debek
-// Year: 24.12.2023
-// Description: An application for replacing text in files recursively.
-
 package main
 
 import (
@@ -15,36 +10,63 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 3 {
-		fmt.Println("Usage: rpl 'old_string' 'new_string'")
+	if len(os.Args) < 3 || len(os.Args) > 4 {
+		fmt.Println("Usage: rpl 'old_string' 'new_string' [file_or_directory]")
 		os.Exit(1)
 	}
 
 	oldString := os.Args[1]
 	newString := os.Args[2]
-	startDir := "."
 
-	var modifiedCount int
-	err := filepath.Walk(startDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			modified, err := replaceInFile(path, oldString, newString)
-			if err != nil {
-				return err
-			}
-			if modified {
-				fmt.Println("Modified:", path)
-				modifiedCount++
-			}
-		}
-		return nil
-	})
+	var startPath string
+	if len(os.Args) == 4 {
+		startPath = os.Args[3]
+	} else {
+		startPath = "."
+	}
 
+	fileInfo, err := os.Stat(startPath)
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)
+	}
+
+	var modifiedCount int
+	if fileInfo.IsDir() {
+		err = filepath.Walk(startPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				modified, err := replaceInFile(path, oldString, newString)
+				if err != nil {
+					return err
+				}
+				if modified {
+					fmt.Println("Modified:", path)
+					modifiedCount++
+				}
+			}
+			return nil
+		})
+
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+	} else {
+		// Jeśli to plik, dokonaj zamiany tylko w tym pliku
+		modified, err := replaceInFile(startPath, oldString, newString)
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+		if modified {
+			fmt.Println("Modified:", startPath)
+			modifiedCount++
+		} else {
+			fmt.Println("No modifications made to:", startPath)
+		}
 	}
 
 	fmt.Println("Total files modified:", modifiedCount)
